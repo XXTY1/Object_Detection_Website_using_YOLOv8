@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>YOLOv8 Object Detection</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: rgb(199, 173, 134);
+      }
+      canvas {
+        border: 2px solid #628cb6;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+      #uploadInput {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        background-color: #9bc5e0;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      #uploadInput:hover{
+        background-color: rgba(87, 87, 184, 0.356);
+      }
+    </style>
+  </head>
+  <body>
+    <input id="uploadInput" type="file" />
+    <canvas></canvas>
+    <script>
+    
+      const input = document.getElementById("uploadInput");
+      input.addEventListener("change", async (event) => {
+        const data = new FormData();
+        data.append("image_file", event.target.files[0], "image_file");
+        const response = await fetch("/detect", {
+          method: "post",
+          body: data,
+        });
+        const boxes = await response.json();
+        draw_image_and_boxes(event.target.files[0], boxes);
+      });
+
+      function draw_image_and_boxes(file, boxes) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.querySelector("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          ctx.strokeStyle = "#00FF00";
+          ctx.lineWidth = 1.5;
+          ctx.font = "10px serif";
+          boxes.forEach(([x1, y1, x2, y2, label]) => {
+            ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+            ctx.fillStyle = "#00ff00";
+            const width = ctx.measureText(label).width;
+            ctx.fillRect(x1, y1, width + 10, 25);
+            ctx.fillStyle = "#000000";
+            ctx.fillText(label, x1, y1 + 18);
+          });
+        };
+      }
+    </script>
+  </body>
+</html>
